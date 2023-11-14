@@ -22,17 +22,16 @@ export class Room {
   }
 
   joinPlayer(ws: WebSocket, playerId: string) {
+    if (this.playersMap.size >= this.maxPlayers) {
+      throw Error(`Room ${this.roomId} is full!` )
+    }
+
     const newPlayer = new Player(ws, playerId);
 
     this.playerIds.push(playerId);
     this.playersMap.set(playerId, newPlayer);
 
-    newPlayer.send({
-      type: 'create',
-      params: {
-        roomId: this.roomId,
-      },
-    });
+    return newPlayer;
   }
 
   removePlayer(player: Player | string) {
@@ -46,6 +45,16 @@ export class Room {
 
     this.playersMap.delete(playerId);
     this.playerIds = this.playerIds.filter((id) => id !== playerId);
+  }
+
+  getPlayer(playerId: string) {
+    return this.playersMap.get(playerId);
+  }
+
+  isAllPlayerReady() {
+    return this.playerIds.every((id) => {
+      return this.playersMap.get(id).getIsPlayerReady();
+    });
   }
 
   getId() {
