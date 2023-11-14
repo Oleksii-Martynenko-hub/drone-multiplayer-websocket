@@ -1,13 +1,17 @@
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 
 import { RoomManager } from './models/room-manager';
 
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 export type WebSocketBody<T extends object = object> = {
-  type: 'create' | 'join' | 'leave' | 'ready';
+  type: 'create' | 'join' | 'leave' | 'ready' | 'start' | 'update';
   params: T;
 };
+
+export type EventParams<T extends 'create' | null = null> = {
+  playerId: string;
+} & (T extends 'create' ? Record<string, never> : Record<'roomId', string>);
 
 const wss = new WebSocketServer({ port });
 
@@ -33,6 +37,7 @@ wss.on('connection', function connection(ws) {
 
       const eventHandler = handlers[type] ?? defaultHandler(type);
 
+      eventHandler(ws, params);
     } catch (error) {
       const err = error as Error;
 
@@ -53,30 +58,55 @@ wss.on('connection', function connection(ws) {
       });
       console.warn(error);
     }
-
-  function defaultHandler(type) {
-    return () => {
-      send(ws, { type: 'error', message: `Type: ${type} unknown` });
-      console.warn(`Type: ${type} unknown`);
-    };
-  }
-
-  function create(params) {
-    const playerId = params.playerId;
-    roomsManager.createRoom(ws, playerId);
-  }
-
-  function ready(params) {
-  }
-
-  function join(params) {
-  }
-
-  function leave(params) {
-  }
-
-  function send(ws, params: object) {
-    ws.send(JSON.stringify(params));
-  }
+  });
 });
 
+function defaultHandler(type) {
+  throw Error(`Type: ${type} unknown`);
+}
+
+function create(ws: WebSocket, { playerId }: EventParams<'create'>) {
+  const room = roomsManager.createRoom(ws, playerId);
+
+  room.getPlayer(playerId).send({
+    type: 'create',
+    params: {
+      roomId: room.getId(),
+    },
+  });
+}
+
+function join(ws: WebSocket, { playerId, roomId }: EventParams) {
+  const room = roomsManager.getRoom(roomId);
+
+  room.sendToRoom({ type: 'join', params: { playerId } }, playerId);
+}
+
+function ready(ws: WebSocket, { playerId, roomId }: EventParams) {
+  const room = roomsManager.getRoom(roomId);
+
+  room.getPlayer(playerId).setPlayerReady();
+
+  room.sendToRoom({ type: 'ready', params: { playerId } }, playerId);
+
+  if (room.isAllPlayerReady()) {
+    room.sendToRoom({ type: 'start', params: { startTime: Date.now() } });
+
+    setInterval(() => {
+      room.sendToRoom({ type: 'update', params: { data: [] } });
+    }, 1000);
+  }
+}
+function leave(ws: WebSocket, { playerId, roomId }: EventParams) {
+  const room = roomsManager.getRoom(roomId);
+
+  room.removePlayer(playerId);
+
+  room.sendToRoom({ type: 'leave', params: { playerId } }, playerId);
+
+  ws.close();
+}
+
+function send(ws, params: object) {
+  ws.send(JSON.stringify(params));
+}
