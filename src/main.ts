@@ -1,27 +1,27 @@
 import { WebSocketServer } from 'ws';
 
-import { Room } from './models/Room';
+import { RoomManager } from './models/room-manager';
 
 const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
-type Data = {
+export type WebSocketBody<T extends object = object> = {
   type: 'create' | 'join' | 'leave' | 'ready';
-  params: object;
+  params: T;
 };
 
-const rooms: Map<string, Room> = new Map();
-
 const wss = new WebSocketServer({ port });
+
+const roomsManager = new RoomManager(wss);
 
 wss.on('connection', function connection(ws) {
   console.info('connected');
   ws.on('error', console.error);
 
-  ws.on('message', function message(data: string) {
-    const obj = JSON.parse(data) as Data;
-    console.log('data', obj);
-    const type = obj.type;
-    const params = obj.params;
+  ws.on('message', function message(rawData: string) {
+    const data = JSON.parse(rawData) as WebSocketBody;
+    console.log('data', data);
+    const type = data.type;
+    const params = data.params;
 
     const handlers = {
       create,
@@ -33,8 +33,6 @@ wss.on('connection', function connection(ws) {
     const eventHandler = handlers[type] ?? defaultHandler(type);
 
     eventHandler(params);
-
-    console.log('rooms', rooms);
   });
 
   function defaultHandler(type) {
@@ -46,11 +44,7 @@ wss.on('connection', function connection(ws) {
 
   function create(params) {
     const playerId = params.playerId;
-    const room = new Room(ws, playerId);
-
-    rooms.set(room.roomId, room);
-
-    send(ws, { type: 'create', roomId: room });
+    roomsManager.createRoom(ws, playerId);
   }
 
   function ready(params) {
@@ -60,10 +54,6 @@ wss.on('connection', function connection(ws) {
   }
 
   function leave(params) {
-  }
-
-  function close(roomId: string) {
-    rooms.delete(roomId);
   }
 
   function send(ws, params: object) {
