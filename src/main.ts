@@ -1,14 +1,16 @@
-import express from 'express';
+import { WebSocketServer } from 'ws';
 
-const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 
-const app = express();
+const wss = new WebSocketServer({ port });
 
-app.get('/', (req, res) => {
-  res.send({ message: 'Hello API' });
+wss.on('connection', function connection(ws) {
+  console.info('connected');
+  ws.on('error', console.error);
+
+  ws.on('message', function message(data: string) {
+    console.log('data', data);
+  });
+
 });
 
-app.listen(port, host, () => {
-  console.log(`[ ready ] http://${host}:${port}`);
-});
