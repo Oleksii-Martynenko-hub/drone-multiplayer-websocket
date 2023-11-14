@@ -16,6 +16,14 @@ export class Player {
     protected readonly playerId: string
   ) {}
 
+  setPlayerReady() {
+    this.isReady = true;
+  }
+
+  getIsPlayerReady() {
+    return this.isReady;
+  }
+
   getId() {
     return this.playerId;
   }
