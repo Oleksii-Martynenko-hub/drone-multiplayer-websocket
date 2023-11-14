@@ -18,22 +18,41 @@ wss.on('connection', function connection(ws) {
   ws.on('error', console.error);
 
   ws.on('message', function message(rawData: string) {
-    const data = JSON.parse(rawData) as WebSocketBody;
-    console.log('data', data);
-    const type = data.type;
-    const params = data.params;
+    try {
+      const data = JSON.parse(rawData) as WebSocketBody<EventParams>;
+      console.log('data', data);
+      const type = data.type;
+      const params = data.params;
 
-    const handlers = {
-      create,
-      join,
-      ready,
-      leave,
-    };
+      const handlers = {
+        create,
+        join,
+        ready,
+        leave,
+      };
 
-    const eventHandler = handlers[type] ?? defaultHandler(type);
+      const eventHandler = handlers[type] ?? defaultHandler(type);
 
-    eventHandler(params);
-  });
+    } catch (error) {
+      const err = error as Error;
+
+      if (err instanceof Error) {
+        send(ws, {
+          type: 'error',
+          params: {
+            message: err.message,
+          },
+        });
+        console.warn(err.message);
+        return;
+      }
+
+      send(ws, {
+        type: 'error',
+        params: { error },
+      });
+      console.warn(error);
+    }
 
   function defaultHandler(type) {
     return () => {

@@ -16,6 +16,10 @@ export class RoomManager {
   }
 
   getRoom(roomId: string) {
+    if (!this.roomsMap.has(roomId)) {
+      throw Error(`Room ${roomId} does not exist!`);
+    }
+
     return this.roomsMap.get(roomId);
   }
 
