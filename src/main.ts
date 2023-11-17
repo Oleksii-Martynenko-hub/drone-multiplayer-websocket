@@ -11,12 +11,9 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 const wss = new WebSocketServer({ server });
 
-let beats = 0;
-
 wss.on('connection', function connection(ws, req) {
   setInterval(() => {
-    beats++;
-    ws.ping('heartbeat ' + beats);
+    ws.ping();
   }, 20000);
   console.log('req.url', req.url);
   console.log('req.headers', req.headers);
