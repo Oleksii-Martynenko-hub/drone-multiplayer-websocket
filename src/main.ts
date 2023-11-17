@@ -1,16 +1,41 @@
+import express from 'express';
+import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
-const port = process.env.PORT ? Number(process.env.PORT) : 8080;
+const app = express();
+const server = createServer(app);
 
-const wss = new WebSocketServer({ port });
+app.use(express.json());
 
-wss.on('connection', function connection(ws) {
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
+
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', function connection(ws, req) {
+  console.log('req.url', req.url);
+  console.log('req.headers', req.headers);
+
   console.info('connected');
   ws.on('error', console.error);
 
   ws.on('message', function message(data: string) {
     console.log('data', data);
   });
-
 });
 
+app.post('/init', (req, res) => {
+  const playerName = req.body.name;
+  const gameComplexity = req.body.complexity;
+
+  res.json({ playerName, gameComplexity });
+});
+
+const start = async () => {
+  try {
+    server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+start();
