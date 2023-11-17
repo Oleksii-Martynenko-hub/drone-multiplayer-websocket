@@ -27,7 +27,7 @@ const roomsManager = new RoomManager(wss);
 wss.on('connection', function connection(ws) {
   setInterval(() => {
     ws.ping();
-  }, 25000);
+  }, 20000);
 
   console.info('connected');
   ws.on('error', console.error);
