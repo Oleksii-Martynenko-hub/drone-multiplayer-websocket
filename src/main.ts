@@ -1,8 +1,15 @@
+import express from 'express';
+import { createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { RoomManager } from './models/room-manager';
 
-const port = process.env.PORT ? Number(process.env.PORT) : 8080;
+const app = express();
+const server = createServer(app);
+
+app.use(express.json());
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 export type WebSocketBody<T extends object = object> = {
   type: 'create' | 'join' | 'leave' | 'ready' | 'start' | 'update';
@@ -13,11 +20,14 @@ export type EventParams<T extends 'create' | null = null> = {
   playerId: string;
 } & (T extends 'create' ? Record<string, never> : Record<'roomId', string>);
 
-const wss = new WebSocketServer({ port });
+const wss = new WebSocketServer({ server });
 
 const roomsManager = new RoomManager(wss);
 
-wss.on('connection', function connection(ws) {
+wss.on('connection', function connection(ws, req) {
+  console.log('req.url', req.url);
+  console.log('req.headers', req.headers);
+
   console.info('connected');
   ws.on('error', console.error);
 
@@ -110,3 +120,20 @@ function leave(ws: WebSocket, { playerId, roomId }: EventParams) {
 function send(ws, params: object) {
   ws.send(JSON.stringify(params));
 }
+
+app.post('/init', (req, res) => {
+  const playerName = req.body.name;
+  const gameComplexity = req.body.complexity;
+
+  res.json({ playerName, gameComplexity });
+});
+
+const start = async () => {
+  try {
+    server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+start();
