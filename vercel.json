@@ -1,9 +1,0 @@
-{
-  "buildCommand": "nx run multiplayer-websocket:build:production",
-  "builds": [
-    {
-      "src": "./dist/multiplayer-websocket/src/main.js",
-      "use": "@vercel/node"
-    }
-  ]
-}
