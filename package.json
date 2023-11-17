@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx serve",
+    "start": "node dist/multiplayer-websocket/src/main.js",
+    "dev": "nx serve",
     "build": "nx build",
     "test": "nx test"
   },
