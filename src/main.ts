@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
 
+import sequelize from './database/db';
 import { RoomManager } from './models/room-manager';
 
 const app = express();
@@ -130,6 +131,8 @@ app.post('/init', (req, res) => {
 
 const start = async () => {
   try {
+    await sequelize.authenticate();
+    await sequelize.sync();
     server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
   } catch (e) {
     console.log(e);
