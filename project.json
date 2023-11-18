@@ -1,5 +1,5 @@
 {
-  "name": "multiplayer-websocket",
+  "name": "drone-through-cave-api",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "src",
   "projectType": "application",
@@ -10,7 +10,7 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/multiplayer-websocket",
+        "outputPath": "dist/drone-through-cave-api",
         "format": ["cjs"],
         "bundle": false,
         "main": "src/main.ts",
@@ -40,14 +40,14 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "multiplayer-websocket:build"
+        "buildTarget": "drone-through-cave-api:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "multiplayer-websocket:build:development"
+          "buildTarget": "drone-through-cave-api:build:development"
         },
         "production": {
-          "buildTarget": "multiplayer-websocket:build:production"
+          "buildTarget": "drone-through-cave-api:build:production"
         }
       }
     },
