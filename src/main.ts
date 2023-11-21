@@ -1,9 +1,12 @@
 import express from 'express';
 import { createServer } from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 
 import sequelize from './database/db';
-import { RoomManager } from './models/room-manager';
+import Player from '../src/models/player.model';
+import Room from '../src/models/room.model';
+
+import './models/associations';
 
 const app = express();
 const server = createServer(app);
@@ -22,8 +25,6 @@ export type EventParams<T extends 'create' | null = null> = {
 } & (T extends 'create' ? Record<string, never> : Record<'roomId', string>);
 
 const wss = new WebSocketServer({ server });
-
-const roomsManager = new RoomManager(wss);
 
 wss.on('connection', function connection(ws, req) {
   console.log('req.url', req.url);
@@ -77,45 +78,14 @@ function defaultHandler(type) {
 }
 
 function create(ws: WebSocket, { playerId }: EventParams<'create'>) {
-  const room = roomsManager.createRoom(ws, playerId);
-
-  room.getPlayer(playerId).send({
-    type: 'create',
-    params: {
-      roomId: room.getId(),
-    },
-  });
 }
 
 function join(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.sendToRoom({ type: 'join', params: { playerId } }, playerId);
 }
 
 function ready(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.getPlayer(playerId).setPlayerReady();
-
-  room.sendToRoom({ type: 'ready', params: { playerId } }, playerId);
-
-  if (room.isAllPlayerReady()) {
-    room.sendToRoom({ type: 'start', params: { startTime: Date.now() } });
-
-    setInterval(() => {
-      room.sendToRoom({ type: 'update', params: { data: [] } });
-    }, 1000);
-  }
 }
 function leave(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.removePlayer(playerId);
-
-  room.sendToRoom({ type: 'leave', params: { playerId } }, playerId);
-
-  ws.close();
 }
 
 function send(ws, params: object) {
