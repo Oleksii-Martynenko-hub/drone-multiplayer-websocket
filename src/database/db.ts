@@ -10,6 +10,7 @@ const sequelize = new Sequelize(process.env.POSTGRES_URL, {
   },
   define: {
     timestamps: false,
+    freezeTableName: true,
   },
 });
 
