@@ -92,11 +92,68 @@ function send(ws, params: object) {
   ws.send(JSON.stringify(params));
 }
 
-app.post('/init', (req, res) => {
-  const playerName = req.body.name;
-  const gameComplexity = req.body.complexity;
+app.post('/player', async (req, res) => {
+  try {
+    const playerName = req.body.name;
 
-  res.json({ playerName, gameComplexity });
+    const newPlayer = await Player.create({ name: playerName });
+
+    res.json({ playerId: newPlayer.id });
+  } catch (error) {
+    console.log('🚀 ~ app.post "/player" ~ error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/player', async (req, res) => {
+  try {
+    const playerName = req.query.name as string;
+
+    const player = await Player.findOne({
+      attributes: ['id', 'name'],
+      where: { name: playerName },
+      include: 'room',
+    });
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    res.json({ data: player.dataValues });
+  } catch (error) {
+    console.log('🚀 ~ app.get "/player" ~ error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/room', async (req, res) => {
+  try {
+    const playerId = req.body.playerId;
+
+    const player = await Player.findOne({
+      where: { id: playerId },
+      include: {
+        model: Room,
+        as: 'room',
+        attributes: ['ownerId', 'complexity'],
+      },
+    });
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+    if (player.get('room')) {
+      return res.status(404).json({ error: 'Player already have room' });
+    }
+
+    const room = await player.createRoom();
+    await room.addPlayer(player);
+
+    res.json({ roomId: room.id });
+  } catch (error) {
+    console.log('🚀 ~ app.post ~ error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 const start = async () => {
