@@ -1,8 +1,14 @@
 import Player from './player.model';
 import Room from './room.model';
 
-Room.hasMany(Player, { foreignKey: 'roomId' });
+Room.hasMany(Player, {
+  as: Room.includePlayersAlias,
+  foreignKey: Room.playerForeignKey,
+});
 
-Player.hasOne(Room, { as: 'room', foreignKey: 'ownerId' });
+Player.hasOne(Room, {
+  as: Player.includeRoomAlias,
+  foreignKey: Player.roomForeignKey,
+});
 
-Room.belongsTo(Player, { foreignKey: 'ownerId' });
+Room.belongsTo(Player, { foreignKey: Player.roomForeignKey });

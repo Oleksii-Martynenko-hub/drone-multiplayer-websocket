@@ -15,6 +15,15 @@ import sequelize from '../database/db';
 import Player from './player.model';
 
 class Room extends Model<InferAttributes<Room>, InferCreationAttributes<Room>> {
+  static readonly attrs = [
+    'id',
+    'ownerId',
+    'complexity',
+    'maxPlayers',
+  ] as const;
+  static readonly playerForeignKey = 'roomId';
+  static readonly includePlayersAlias = 'players';
+
   declare id: CreationOptional<number>;
   declare ownerId: ForeignKey<Player['id']>;
   declare complexity: number;
@@ -24,6 +33,13 @@ class Room extends Model<InferAttributes<Room>, InferCreationAttributes<Room>> {
   declare setPlayer: HasManySetAssociationsMixin<Player, number>;
   declare removePlayer: HasManyRemoveAssociationMixin<Player, number>;
   declare countPlayers: HasManyCountAssociationsMixin;
+
+  static getAttributesKeys(except?: ReturnType<typeof this.attrs.slice>) {
+    if (except) {
+      return this.attrs.filter((key) => !except.includes(key)) as string[];
+    }
+    return this.attrs as unknown as string[];
+  }
 }
 
 Room.init(
