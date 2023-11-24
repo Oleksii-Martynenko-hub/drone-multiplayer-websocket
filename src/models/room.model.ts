@@ -6,16 +6,14 @@ import {
   HasManyCountAssociationsMixin,
   HasManyRemoveAssociationMixin,
   HasManySetAssociationsMixin,
-  InferAttributes,
-  InferCreationAttributes,
-  Model,
 } from 'sequelize';
 
 import sequelize from '../database/db';
 import Player from './player.model';
+import { CommonModel, GetAttrKeysMethod } from './common.model';
 
-class Room extends Model<InferAttributes<Room>, InferCreationAttributes<Room>> {
-  static readonly attrs = [
+class Room extends CommonModel<Room> {
+  static readonly attributes = [
     'id',
     'ownerId',
     'complexity',
@@ -34,12 +32,7 @@ class Room extends Model<InferAttributes<Room>, InferCreationAttributes<Room>> {
   declare removePlayer: HasManyRemoveAssociationMixin<Player, number>;
   declare countPlayers: HasManyCountAssociationsMixin;
 
-  static getAttributesKeys(except?: ReturnType<typeof this.attrs.slice>) {
-    if (except) {
-      return this.attrs.filter((key) => !except.includes(key)) as string[];
-    }
-    return this.attrs as unknown as string[];
-  }
+  declare static getAttrKeys: GetAttrKeysMethod<Room>;
 }
 
 Room.init(

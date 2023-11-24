@@ -110,13 +110,13 @@ app.get('/player', async (req, res) => {
     const playerName = req.query.name as string;
 
     const player = await Player.findOne({
-      attributes: Player.getAttributesKeys(['roomId']),
+      attributes: Player.getAttrKeys(['roomId']),
       where: { name: playerName },
       include: {
         model: Room,
         as: Player.includeRoomAlias,
         attributes: [
-          ...Room.getAttributesKeys(['complexity']),
+          ...Room.getAttrKeys(['complexity']),
           ['complexity', 'difficulty'],
         ],
       },
@@ -142,7 +142,7 @@ app.post('/room', async (req, res) => {
       include: {
         model: Room,
         as: Player.includeRoomAlias,
-        attributes: Room.getAttributesKeys(['maxPlayers', 'ownerId']),
+        attributes: Room.getAttrKeys(['maxPlayers', 'ownerId']),
       },
     });
 

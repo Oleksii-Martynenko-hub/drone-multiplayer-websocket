@@ -3,19 +3,14 @@ import {
   DataTypes,
   ForeignKey,
   HasOneCreateAssociationMixin,
-  InferAttributes,
-  InferCreationAttributes,
-  Model,
 } from 'sequelize';
 
 import sequelize from '../database/db';
 import Room from './room.model';
+import { CommonModel, GetAttrKeysMethod } from './common.model';
 
-class Player extends Model<
-  InferAttributes<Player>,
-  InferCreationAttributes<Player>
-> {
-  static readonly attrs = ['id', 'name', 'roomId'] as const;
+class Player extends CommonModel<Player> {
+  static readonly attributes = ['id', 'name', 'roomId'] as const;
   static readonly roomForeignKey = 'ownerId';
   static readonly includeRoomAlias = 'room';
 
@@ -25,12 +20,7 @@ class Player extends Model<
 
   declare createRoom: HasOneCreateAssociationMixin<Room>;
 
-  static getAttributesKeys(except?: ReturnType<typeof this.attrs.slice>) {
-    if (Array.isArray(except)) {
-      return this.attrs.filter((key) => !except.includes(key)) as string[];
-    }
-    return this.attrs as unknown as string[];
-  }
+  declare static getAttrKeys: GetAttrKeysMethod<Player>;
 }
 
 Player.init(
