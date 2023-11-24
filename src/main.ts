@@ -105,6 +105,30 @@ app.post('/player', async (req, res) => {
   }
 });
 
+app.get('/room', async (req, res) => {
+  try {
+    const roomId = req.query.roomId as string;
+
+    const room = await Room.findByPk(roomId, {
+      attributes: Room.getAttrKeys(['complexity']),
+      include: {
+        model: Player,
+        as: Room.includePlayersAlias,
+        attributes: Player.getAttrKeys(['roomId']),
+      },
+    });
+
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    res.json({ data: room.dataValues });
+  } catch (error) {
+    console.log('🚀 ~ app.get "/room" ~ error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/player', async (req, res) => {
   try {
     const playerName = req.query.name as string;
