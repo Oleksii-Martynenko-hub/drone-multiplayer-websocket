@@ -6,12 +6,16 @@ import sequelize from './database/db';
 import Player from '../src/models/player.model';
 import Room from '../src/models/room.model';
 
+import playerRouter from './routes/player.router';
+
 import './models/associations';
 
 const app = express();
 const server = createServer(app);
 
 app.use(express.json());
+
+app.use('/player', playerRouter);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
@@ -92,19 +96,6 @@ function send(ws, params: object) {
   ws.send(JSON.stringify(params));
 }
 
-app.post('/player', async (req, res) => {
-  try {
-    const playerName = req.body.name;
-
-    const newPlayer = await Player.create({ name: playerName });
-
-    res.json({ playerId: newPlayer.id });
-  } catch (error) {
-    console.log('🚀 ~ app.post "/player" ~ error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 app.get('/room', async (req, res) => {
   try {
     const roomId = req.query.roomId as string;
@@ -125,34 +116,6 @@ app.get('/room', async (req, res) => {
     res.json({ data: room.dataValues });
   } catch (error) {
     console.log('🚀 ~ app.get "/room" ~ error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/player', async (req, res) => {
-  try {
-    const playerName = req.query.name as string;
-
-    const player = await Player.findOne({
-      attributes: Player.getAttrKeys(['roomId']),
-      where: { name: playerName },
-      include: {
-        model: Room,
-        as: Player.includeRoomAlias,
-        attributes: [
-          ...Room.getAttrKeys(['complexity']),
-          ['complexity', 'difficulty'],
-        ],
-      },
-    });
-
-    if (!player) {
-      return res.status(404).json({ error: 'Player not found' });
-    }
-
-    res.json({ data: player.dataValues });
-  } catch (error) {
-    console.log('🚀 ~ app.get "/player" ~ error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
