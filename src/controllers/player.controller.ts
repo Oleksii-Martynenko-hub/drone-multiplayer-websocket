@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 
-import Player from '../models/player.model';
-import Room from '../models/room.model';
+import { PlayerService } from '../services/player.service';
 
 export class PlayerController {
+  private playerService = new PlayerService();
+
   public getPlayerByName = async (
     req: Request,
     res: Response
@@ -11,18 +12,9 @@ export class PlayerController {
     try {
       const playerName = req.query.name as string;
 
-      const player = await Player.findOne({
-        attributes: Player.getAttrKeys(['roomId']),
-        where: { name: playerName },
-        include: {
-          model: Room,
-          as: Player.includeRoomAlias,
-          attributes: [
-            ...Room.getAttrKeys(['complexity']),
-            ['complexity', 'difficulty'],
-          ],
-        },
-      });
+      const player = await this.playerService.getPlayerByNameWithRoom(
+        playerName
+      );
 
       if (!player) {
         res.status(404).json({ error: 'Player not found' });
@@ -42,7 +34,7 @@ export class PlayerController {
     try {
       const playerName = req.body.name;
 
-      const newPlayer = await Player.create({ name: playerName });
+      const newPlayer = await this.playerService.createPlayer(playerName);
 
       res.status(201).json({ playerId: newPlayer.id });
     } catch (error) {
