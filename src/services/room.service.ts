@@ -4,7 +4,6 @@ import Player from '../models/player.model';
 export class RoomService {
   public async getRoomByIdWithPlayers(roomId: string): Promise<Room> {
     return Room.findByPk(roomId, {
-      attributes: Room.getAttrKeys(['complexity']),
       include: {
         model: Player,
         as: Room.includePlayersAlias,

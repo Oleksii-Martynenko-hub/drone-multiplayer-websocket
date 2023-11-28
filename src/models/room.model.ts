@@ -18,7 +18,6 @@ class Room extends CommonModel<Room> {
   static readonly playerForeignKey = 'ownerId';
   static readonly attributes = [
     'id',
-    'complexity',
     'maxPlayers',
     this.playerForeignKey,
   ] as const;
@@ -27,7 +26,6 @@ class Room extends CommonModel<Room> {
 
   declare id: CreationOptional<number>;
   declare ownerId: ForeignKey<Player['id']>;
-  declare complexity: number;
   declare maxPlayers: number;
 
   declare addPlayer: HasManyAddAssociationMixin<Player, number>;
@@ -45,15 +43,6 @@ Room.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-    },
-    complexity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      validate: {
-        isInt: true,
-        min: 0,
-        max: 10,
-      },
     },
     maxPlayers: {
       type: DataTypes.INTEGER,
