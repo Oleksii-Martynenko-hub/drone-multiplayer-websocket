@@ -6,11 +6,13 @@ import {
   HasManyCountAssociationsMixin,
   HasManyRemoveAssociationMixin,
   HasManySetAssociationsMixin,
+  HasOneCreateAssociationMixin,
 } from 'sequelize';
 
 import sequelize from '../database/db';
 import Player from './player.model';
 import { CommonModel, GetAttrKeysMethod } from './common.model';
+import Session from './session.model';
 
 class Room extends CommonModel<Room> {
   static readonly playerForeignKey = 'ownerId';
@@ -21,6 +23,7 @@ class Room extends CommonModel<Room> {
     this.playerForeignKey,
   ] as const;
   static readonly includePlayersAlias = 'players';
+  static readonly includeSessionsAlias = 'sessions';
 
   declare id: CreationOptional<number>;
   declare ownerId: ForeignKey<Player['id']>;
@@ -31,6 +34,7 @@ class Room extends CommonModel<Room> {
   declare setPlayer: HasManySetAssociationsMixin<Player, number>;
   declare removePlayer: HasManyRemoveAssociationMixin<Player, number>;
   declare countPlayers: HasManyCountAssociationsMixin;
+  declare createSession: HasOneCreateAssociationMixin<Session>;
 
   declare static getAttrKeys: GetAttrKeysMethod<Room>;
 }
