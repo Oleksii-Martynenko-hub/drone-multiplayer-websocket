@@ -10,6 +10,9 @@ import playerRouter from './routes/player.router';
 import roomRouter from './routes/room.router';
 import baseRouter from './routes/base.router';
 
+import Player from './models/player.model';
+import Token from './models/token.model';
+
 const app = express();
 const server = createServer(app);
 
@@ -33,29 +36,43 @@ export type EventParams<T extends 'create' | null = null> = {
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', function connection(ws, req) {
-  console.log('req.url', req.url);
-  console.log('req.headers', req.headers);
+  if (!req.url.includes('/cave')) {
+    ws.close(1008, 'Invalid URL');
+    return;
+  }
 
   console.info('connected');
   ws.on('error', console.error);
 
-  ws.on('message', function message(rawData: string) {
+  ws.on('message', async function message(rawData) {
     try {
-      const data = JSON.parse(rawData) as WebSocketBody<EventParams>;
-      console.log('data', data);
-      const type = data.type;
-      const params = data.params;
+      const data = rawData.toString() as string;
 
-      const handlers = {
-        create,
-        join,
-        ready,
-        leave,
-      };
+      const playerId = data.substring(data.indexOf(':') + 1, data.indexOf('-'));
+      const rawToken = data.substring(data.indexOf('-') + 1, data.length);
 
-      const eventHandler = handlers[type] ?? defaultHandler(type);
+      const player = (await Player.findByPk(playerId, {
+        include: Player.includeTokenAlias,
+      })) as Player & { token: Token };
+      if (!player) {
+        throw Error(`Player with id: ${playerId} not found`);
+      }
 
-      eventHandler(ws, params);
+      if (player.token.token !== rawToken) {
+        throw Error(`Token not match`);
+      }
+
+      let i = 0;
+
+      const interval = setInterval(() => {
+        ws.send(Math.random().toFixed(3));
+        i++;
+        if (i > 100) {
+          clearInterval(interval);
+          ws.send('finished');
+          ws.close();
+        }
+      }, 10);
     } catch (error) {
       const err = error as Error;
 
@@ -78,21 +95,6 @@ wss.on('connection', function connection(ws, req) {
     }
   });
 });
-
-function defaultHandler(type) {
-  throw Error(`Type: ${type} unknown`);
-}
-
-function create(ws: WebSocket, { playerId }: EventParams<'create'>) {
-}
-
-function join(ws: WebSocket, { playerId, roomId }: EventParams) {
-}
-
-function ready(ws: WebSocket, { playerId, roomId }: EventParams) {
-}
-function leave(ws: WebSocket, { playerId, roomId }: EventParams) {
-}
 
 function send(ws, params: object) {
   ws.send(JSON.stringify(params));
