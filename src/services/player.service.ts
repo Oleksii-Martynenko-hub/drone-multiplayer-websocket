@@ -17,6 +17,16 @@ export class PlayerService {
     });
   }
 
+  public async getPlayerWithRoom(playerId: string): Promise<Player> {
+    return Player.findByPk(playerId, {
+      include: {
+        model: Room,
+        as: Player.includeRoomAlias,
+        attributes: Room.getAttrKeys(['maxPlayers', 'ownerId']),
+      },
+    });
+  }
+
   public async createPlayer(playerName: string): Promise<Player> {
     return Player.create({ name: playerName });
   }

@@ -1,21 +1,17 @@
 import { Request, Response } from 'express';
 
-import Player from '../models/player.model';
-import Room from '../models/room.model';
+import { RoomService } from '../services/room.service';
+import { PlayerService } from '../services/player.service';
 
 export class RoomController {
+  private roomService = new RoomService();
+  private playerService = new PlayerService();
+
   public getRoomById = async (req: Request, res: Response): Promise<void> => {
     try {
       const roomId = req.query.roomId as string;
 
-      const room = await Room.findByPk(roomId, {
-        attributes: Room.getAttrKeys(['complexity']),
-        include: {
-          model: Player,
-          as: Room.includePlayersAlias,
-          attributes: Player.getAttrKeys(['roomId']),
-        },
-      });
+      const room = await this.roomService.getRoomByIdWithPlayers(roomId);
 
       if (!room) {
         res.status(404).json({ error: 'Room not found' });
@@ -35,14 +31,7 @@ export class RoomController {
     try {
       const playerId = req.body.playerId;
 
-      const player = await Player.findOne({
-        where: { id: playerId },
-        include: {
-          model: Room,
-          as: Player.includeRoomAlias,
-          attributes: Room.getAttrKeys(['maxPlayers', 'ownerId']),
-        },
-      });
+      const player = await this.playerService.getPlayerWithRoom(playerId);
 
       if (!player) {
         res.status(404).json({ error: 'Player not found' });
