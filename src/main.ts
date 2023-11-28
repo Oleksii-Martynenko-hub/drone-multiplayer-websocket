@@ -8,12 +8,14 @@ import './models/associations';
 
 import playerRouter from './routes/player.router';
 import roomRouter from './routes/room.router';
+import baseRouter from './routes/base.router';
 
 const app = express();
 const server = createServer(app);
 
 app.use(express.json());
 
+app.use('/', baseRouter);
 app.use('/player', playerRouter);
 app.use('/room', roomRouter);
 
