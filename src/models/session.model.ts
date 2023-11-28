@@ -51,7 +51,7 @@ Session.init(
   },
   {
     sequelize,
-    tableName: 'token',
+    tableName: 'session',
     timestamps: true,
     updatedAt: false,
   }
