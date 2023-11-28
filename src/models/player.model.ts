@@ -11,9 +11,8 @@ import { CommonModel, GetAttrKeysMethod } from './common.model';
 import Token from './token.model';
 
 class Player extends CommonModel<Player> {
-  static readonly attributes = ['id', 'name', 'roomId'] as const;
-  static readonly roomForeignKey = 'ownerId';
-  static readonly tokenForeignKey = 'playerId';
+  static readonly roomForeignKey = 'roomId';
+  static readonly attributes = ['id', 'name', this.roomForeignKey] as const;
   static readonly includeRoomAlias = 'room';
   static readonly includeTokenAlias = 'token';
 

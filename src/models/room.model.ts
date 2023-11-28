@@ -13,13 +13,13 @@ import Player from './player.model';
 import { CommonModel, GetAttrKeysMethod } from './common.model';
 
 class Room extends CommonModel<Room> {
+  static readonly playerForeignKey = 'ownerId';
   static readonly attributes = [
     'id',
-    'ownerId',
     'complexity',
     'maxPlayers',
+    this.playerForeignKey,
   ] as const;
-  static readonly playerForeignKey = 'roomId';
   static readonly includePlayersAlias = 'players';
 
   declare id: CreationOptional<number>;

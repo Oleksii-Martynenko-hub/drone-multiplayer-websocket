@@ -4,16 +4,16 @@ import Token from './token.model';
 
 Room.hasMany(Player, {
   as: Room.includePlayersAlias,
-  foreignKey: Room.playerForeignKey,
+  foreignKey: Player.roomForeignKey,
 });
 Player.hasOne(Room, {
   as: Player.includeRoomAlias,
-  foreignKey: Player.roomForeignKey,
+  foreignKey: Room.playerForeignKey,
 });
-Room.belongsTo(Player, { foreignKey: Player.roomForeignKey });
+Room.belongsTo(Player, { foreignKey: Room.playerForeignKey });
 
 Player.hasOne(Token, {
   as: Player.includeTokenAlias,
-  foreignKey: Player.tokenForeignKey,
+  foreignKey: Token.playerForeignKey,
 });
-Token.belongsTo(Player, { foreignKey: Player.tokenForeignKey });
+Token.belongsTo(Player, { foreignKey: Token.playerForeignKey });

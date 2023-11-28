@@ -5,7 +5,8 @@ import Player from './player.model';
 import { CommonModel, GetAttrKeysMethod } from './common.model';
 
 class Token extends CommonModel<Token> {
-  static readonly attributes = ['id', 'token', 'playerId'] as const;
+  static readonly playerForeignKey = 'playerId';
+  static readonly attributes = ['id', 'token', this.playerForeignKey] as const;
 
   declare id: CreationOptional<number>;
   declare token: string;
