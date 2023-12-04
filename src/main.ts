@@ -80,12 +80,13 @@ wss.on('connection', function connection(ws, req) {
       const caveWallsData = generateCaveWallsByComplexity(session.complexity);
 
       const interval = setInterval(() => {
-        const wallPositionsString = caveWallsData[i].join();
+        const data = caveWallsData[i] || [''];
+        const wallPositionsString = data.join();
 
         ws.send(wallPositionsString);
 
         i++;
-        if (i > caveWallsData.length) {
+        if (i >= caveWallsData.length) {
           clearInterval(interval);
           ws.send('finished');
           ws.close();
