@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node dist/drone-through-cave-api/src/main.js",
     "dev": "nx serve",
-    "build": "nx build",
+    "build": "nx reset & nx build",
     "test": "nx test"
   },
   "private": true,
