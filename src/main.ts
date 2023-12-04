@@ -43,6 +43,14 @@ wss.on('connection', function connection(ws, req) {
     ws.close(1008, 'Invalid URL');
     return;
   }
+  
+  const pingInterval = setInterval(() => {
+    ws.ping();
+  }, 20000);
+
+  setTimeout(() => {
+    clearInterval(pingInterval);
+  }, 1000 * 60 * 5);
 
   console.info('connected');
   ws.on('error', console.error);
