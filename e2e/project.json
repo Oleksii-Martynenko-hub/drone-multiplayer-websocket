@@ -1,7 +1,7 @@
 {
   "name": "e2e",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "implicitDependencies": ["multiplayer-websocket"],
+  "implicitDependencies": ["drone-through-cave-api"],
   "projectType": "application",
   "targets": {
     "e2e": {

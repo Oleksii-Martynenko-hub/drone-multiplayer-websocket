@@ -1,11 +1,31 @@
 import express from 'express';
 import { createServer } from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 
-import { RoomManager } from './models/room-manager';
+import { generateCaveWallsByComplexity } from './utils/generate-wall-positions';
+
+import sequelize from './database/db';
+
+import './models/associations';
+
+import playerRouter from './routes/player.router';
+import roomRouter from './routes/room.router';
+import baseRouter from './routes/base.router';
+
+import Player from './models/player.model';
+import Token from './models/token.model';
+import Session from './models/session.model';
 
 const app = express();
 const server = createServer(app);
+
+app.use(express.json());
+
+app.use('/', baseRouter);
+app.use('/player', playerRouter);
+app.use('/room', roomRouter);
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
 export type WebSocketBody<T extends object = object> = {
   type: 'create' | 'join' | 'leave' | 'ready' | 'start' | 'update';
@@ -16,39 +36,61 @@ export type EventParams<T extends 'create' | null = null> = {
   playerId: string;
 } & (T extends 'create' ? Record<string, never> : Record<'roomId', string>);
 
-app.use(express.json());
-
-const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
-
 const wss = new WebSocketServer({ server });
 
-const roomsManager = new RoomManager(wss);
-
-wss.on('connection', function connection(ws) {
-  setInterval(() => {
-    ws.ping();
-  }, 20000);
+wss.on('connection', function connection(ws, req) {
+  if (!req.url.includes('/cave')) {
+    ws.close(1008, 'Invalid URL');
+    return;
+  }
 
   console.info('connected');
   ws.on('error', console.error);
 
-  ws.on('message', function message(rawData: string) {
+  ws.on('message', async function message(rawData) {
     try {
-      const data = JSON.parse(rawData) as WebSocketBody<EventParams>;
-      console.log('data', data);
-      const type = data.type;
-      const params = data.params;
+      const data = rawData.toString() as string;
 
-      const handlers = {
-        create,
-        join,
-        ready,
-        leave,
+      const playerId = data.substring(data.indexOf(':') + 1, data.indexOf('-'));
+      const rawToken = data.substring(data.indexOf('-') + 1, data.length);
+
+      type PlayerType = Player & {
+        [Player.includeTokenAlias]: Token;
+        [Player.includeSessionsAlias]: Session[];
       };
 
-      const eventHandler = handlers[type] ?? defaultHandler(type);
+      const player = (await Player.findByPk(playerId, {
+        include: [Player.includeTokenAlias, Player.includeSessionsAlias],
+      })) as PlayerType;
 
-      eventHandler(ws, params);
+      if (!player) {
+        throw Error(`Player with id: ${playerId} not found`);
+      }
+
+      if (player.token.token !== rawToken) {
+        throw Error(`Token not match`);
+      }
+
+      if (!player.sessions || !player.sessions.length) {
+        throw Error(`Player with id: ${playerId} doesn't have any session`);
+      }
+      const session = player.sessions[0];
+
+      let i = 0;
+      const caveWallsData = generateCaveWallsByComplexity(session.complexity);
+
+      const interval = setInterval(() => {
+        const wallPositionsString = caveWallsData[i].join();
+
+        ws.send(wallPositionsString);
+
+        i++;
+        if (i > caveWallsData.length) {
+          clearInterval(interval);
+          ws.send('finished');
+          ws.close();
+        }
+      }, 10);
     } catch (error) {
       const err = error as Error;
 
@@ -72,65 +114,14 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-function defaultHandler(type) {
-  throw Error(`Type: ${type} unknown`);
-}
-
-function create(ws: WebSocket, { playerId }: EventParams<'create'>) {
-  const room = roomsManager.createRoom(ws, playerId);
-
-  room.getPlayer(playerId).send({
-    type: 'create',
-    params: {
-      roomId: room.getId(),
-    },
-  });
-}
-
-function join(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.sendToRoom({ type: 'join', params: { playerId } }, playerId);
-}
-
-function ready(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.getPlayer(playerId).setPlayerReady();
-
-  room.sendToRoom({ type: 'ready', params: { playerId } }, playerId);
-
-  if (room.isAllPlayerReady()) {
-    room.sendToRoom({ type: 'start', params: { startTime: Date.now() } });
-
-    setInterval(() => {
-      room.sendToRoom({ type: 'update', params: { data: [] } });
-    }, 1000);
-  }
-}
-function leave(ws: WebSocket, { playerId, roomId }: EventParams) {
-  const room = roomsManager.getRoom(roomId);
-
-  room.removePlayer(playerId);
-
-  room.sendToRoom({ type: 'leave', params: { playerId } }, playerId);
-
-  ws.close();
-}
-
 function send(ws, params: object) {
   ws.send(JSON.stringify(params));
 }
 
-app.post('/init', (req, res) => {
-  const playerName = req.body.name;
-  const gameComplexity = req.body.complexity;
-
-  res.json({ playerName, gameComplexity });
-});
-
 const start = async () => {
   try {
+    await sequelize.authenticate();
+    await sequelize.sync();
     server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
   } catch (e) {
     console.log(e);
