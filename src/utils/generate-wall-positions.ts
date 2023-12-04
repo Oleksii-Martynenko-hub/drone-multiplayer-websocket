@@ -1,49 +1,94 @@
 import { maxMin } from './max-min';
 import { randomNumber } from './random-number';
+import { getClosestXFromYBezier } from './cubic-bezier';
 
-export const generateCaveWallsByComplexity = (complexity: number) => {
-  const startPosition = 0;
-  const startWidth = Math.round(150 - 7.6 * complexity);
+const getLeftRightXByCenterAndWidth = (center: number, width: number) => {
+  const left = Math.round(center - width / 2);
+  const right = Math.round(center + width / 2);
+  return [left, right];
+};
 
-  const walls = [
-    [startPosition - startWidth / 2, startPosition + startWidth / 2],
-  ];
+const getPointsToCalcBezierX = (startX: number, endX: number, endY: number) => {
+  return [
+    { x: startX, y: 0 },
+    { x: startX, y: endY / 2 },
+    { x: endX, y: endY / 2 },
+    { x: endX, y: endY },
+  ] as const;
+};
 
-  const step = 30 + 4 * complexity;
-  const coeff = 0.3 + 0.04 * complexity;
-  const maxWidthChange = startWidth / 3;
-  const widthStep = 7 + 0.3 * complexity;
-  const maxWidth = startWidth + maxWidthChange;
-  const minWidth = startWidth - maxWidthChange;
+/**
+ *
+ * @param complexity difficulty level of cave min 0 max 10
+ * @param wallQuantity how many walls (positions.length + 1) will be generated
+ * @param wallHeight increase to more accuracy calculate x position (decr. optimization)
+ * @returns walls [number, number][], each array is position of cave wall by x axis,
+ *  first number is left wall, second number is right wall
+ * @description start from center (x = 0), with init width (~150-74, depends on complexity)
+ */
 
-  let lastStep = randomNumber((step / 5) * -1, step / 5);
-  let lastPosition = startPosition;
-  let lastWidth = startWidth;
+export const generateCaveWallsByComplexity = (
+  complexity: number,
+  wallQuantity = 1000,
+  wallHeight = 10
+) => {
+  const gameFieldWidth = 500;
+  const gameFieldPaddings = 20;
 
-  for (let i = 0; i < 1000; i++) {
-    const widthChange = randomNumber(widthStep * -1, widthStep);
-    const newWidth = maxMin(lastWidth + widthChange, maxWidth, minWidth);
+  let lastPosition = 0;
+  let lastWidth = Math.round(150 - 7.6 * complexity);
 
-    const maxPos = 235 - newWidth / 2;
-    const minPos = -235 + newWidth / 2;
+  // start position
+  const walls = [[lastPosition - lastWidth / 2, lastPosition + lastWidth / 2]];
 
-    const stepCoeff = randomNumber(0.1, coeff);
-    const currentStep = maxMin(
-      (lastStep || randomNumber((step / 5) * -1, step / 5)) * stepCoeff,
-      step,
-      step * -1
+  const maxWidth = lastWidth + lastWidth / 3;
+  const minWidth = lastWidth - lastWidth / 3;
+  const maxDistance = 300 + complexity * 10;
+  const minDistance = 10 + complexity * 5;
+  const maxWalls = 55 - 1.5 * complexity;
+  const minWalls = 25 - 1.5 * complexity;
+
+  while (walls.length < wallQuantity) {
+    const moveLeftPercent = 50 - lastPosition * -0.25;
+    let isMoveLeft = Math.random() <= moveLeftPercent / 100;
+
+    const newWidth = randomNumber(maxWidth, minWidth);
+    const maxPos = gameFieldWidth / 2 - gameFieldPaddings - newWidth / 2;
+    const minPos = -(gameFieldWidth / 2 - gameFieldPaddings) + newWidth / 2;
+
+    const availableDistance = Math.abs(
+      (isMoveLeft ? minPos : maxPos) - lastPosition
     );
-    const newPosition = maxMin(lastPosition + currentStep, maxPos, minPos);
+    const distance = maxMin(availableDistance, maxDistance, minDistance);
+    isMoveLeft = availableDistance < minDistance ? !isMoveLeft : isMoveLeft;
 
-    const left = Math.round(newPosition - newWidth / 2);
-    const right = Math.round(newPosition + newWidth / 2);
+    const moveBy = randomNumber(distance, minDistance);
+    const moveToPosition = moveBy * (isMoveLeft ? -1 : 1) + lastPosition;
+    const wallsAmount = randomNumber(maxWalls, minWalls);
+    const distanceY = wallsAmount * wallHeight;
+    const widthChangeStep = (newWidth - lastWidth) / wallsAmount;
 
-    walls.push([left, right]);
+    // generate positions between lastPosition and position destination
+    for (let y = wallHeight; y < distanceY; y += wallHeight) {
+      if (walls.length > wallQuantity) break;
+      const currentWidth = lastWidth + widthChangeStep * (y / wallHeight);
 
-    lastStep = Math.round(currentStep);
-    lastPosition = newPosition;
+      const newPositionX = getClosestXFromYBezier(
+        y,
+        ...getPointsToCalcBezierX(lastPosition, moveToPosition, distanceY)
+      );
+
+      walls.push(getLeftRightXByCenterAndWidth(newPositionX, currentWidth));
+    }
+
+    if (walls.length > wallQuantity) break;
+
+    // to more accuracy position of last point set it by hand
+    walls.push(getLeftRightXByCenterAndWidth(moveToPosition, newWidth));
+
     lastWidth = newWidth;
+    lastPosition = moveToPosition;
   }
 
-  return walls as [number, number][];
+  return walls;
 };

@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
@@ -18,6 +19,15 @@ import Session from './models/session.model';
 
 const app = express();
 const server = createServer(app);
+
+app.use(
+  cors({
+    origin: [
+      'http://127.0.0.1:4200',
+      'https://drone-through-cave-game.vercel.app',
+    ],
+  })
+);
 
 app.use(express.json());
 
@@ -43,6 +53,14 @@ wss.on('connection', function connection(ws, req) {
     ws.close(1008, 'Invalid URL');
     return;
   }
+  
+  const pingInterval = setInterval(() => {
+    ws.ping();
+  }, 20000);
+
+  setTimeout(() => {
+    clearInterval(pingInterval);
+  }, 1000 * 60 * 5);
 
   console.info('connected');
   ws.on('error', console.error);
@@ -80,12 +98,13 @@ wss.on('connection', function connection(ws, req) {
       const caveWallsData = generateCaveWallsByComplexity(session.complexity);
 
       const interval = setInterval(() => {
-        const wallPositionsString = caveWallsData[i].join();
+        const data = caveWallsData[i] || [''];
+        const wallPositionsString = data.join();
 
         ws.send(wallPositionsString);
 
         i++;
-        if (i > caveWallsData.length) {
+        if (i >= caveWallsData.length) {
           clearInterval(interval);
           ws.send('finished');
           ws.close();
