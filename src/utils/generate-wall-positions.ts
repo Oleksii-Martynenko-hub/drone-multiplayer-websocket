@@ -1,7 +1,7 @@
 import { maxMin } from './max-min';
 import { randomNumber } from './random-number';
 
-export const generateWallsByComplexity = (complexity: number) => {
+export const generateCaveWallsByComplexity = (complexity: number) => {
   const startPosition = 0;
   const startWidth = Math.round(150 - 7.6 * complexity);
 
@@ -45,5 +45,5 @@ export const generateWallsByComplexity = (complexity: number) => {
     lastWidth = newWidth;
   }
 
-  return walls;
+  return walls as [number, number][];
 };

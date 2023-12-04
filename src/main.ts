@@ -2,6 +2,8 @@ import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
+import { generateCaveWallsByComplexity } from './utils/generate-wall-positions';
+
 import sequelize from './database/db';
 
 import './models/associations';
@@ -12,6 +14,7 @@ import baseRouter from './routes/base.router';
 
 import Player from './models/player.model';
 import Token from './models/token.model';
+import Session from './models/session.model';
 
 const app = express();
 const server = createServer(app);
@@ -51,9 +54,15 @@ wss.on('connection', function connection(ws, req) {
       const playerId = data.substring(data.indexOf(':') + 1, data.indexOf('-'));
       const rawToken = data.substring(data.indexOf('-') + 1, data.length);
 
+      type PlayerType = Player & {
+        [Player.includeTokenAlias]: Token;
+        [Player.includeSessionsAlias]: Session[];
+      };
+
       const player = (await Player.findByPk(playerId, {
-        include: Player.includeTokenAlias,
-      })) as Player & { token: Token };
+        include: [Player.includeTokenAlias, Player.includeSessionsAlias],
+      })) as PlayerType;
+
       if (!player) {
         throw Error(`Player with id: ${playerId} not found`);
       }
@@ -62,12 +71,21 @@ wss.on('connection', function connection(ws, req) {
         throw Error(`Token not match`);
       }
 
+      if (!player.sessions || !player.sessions.length) {
+        throw Error(`Player with id: ${playerId} doesn't have any session`);
+      }
+      const session = player.sessions[0];
+
       let i = 0;
+      const caveWallsData = generateCaveWallsByComplexity(session.complexity);
 
       const interval = setInterval(() => {
-        ws.send(Math.random().toFixed(3));
+        const wallPositionsString = caveWallsData[i].join();
+
+        ws.send(wallPositionsString);
+
         i++;
-        if (i > 100) {
+        if (i > caveWallsData.length) {
           clearInterval(interval);
           ws.send('finished');
           ws.close();
