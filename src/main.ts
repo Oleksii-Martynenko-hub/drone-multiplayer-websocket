@@ -23,7 +23,6 @@ const server = createServer(app);
 app.use(
   cors({
     origin: [
-      '*',
       'http://127.0.0.1:4200/',
       'https://drone-through-cave-game.vercel.app/',
     ],
