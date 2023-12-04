@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
@@ -18,6 +19,16 @@ import Session from './models/session.model';
 
 const app = express();
 const server = createServer(app);
+
+app.use(
+  cors({
+    origin: [
+      '*',
+      'http://127.0.0.1:4200/',
+      'https://drone-through-cave-game.vercel.app/',
+    ],
+  })
+);
 
 app.use(express.json());
 
