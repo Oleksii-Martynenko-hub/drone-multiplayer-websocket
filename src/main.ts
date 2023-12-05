@@ -3,8 +3,6 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
-import { generateCaveWallsByComplexity } from './utils/generate-wall-positions';
-
 import sequelize from './database/db';
 
 import './models/associations';
@@ -53,7 +51,7 @@ wss.on('connection', function connection(ws, req) {
     ws.close(1008, 'Invalid URL');
     return;
   }
-  
+
   const pingInterval = setInterval(() => {
     ws.ping();
   }, 20000);
@@ -95,13 +93,10 @@ wss.on('connection', function connection(ws, req) {
       const session = player.sessions[0];
 
       let i = 0;
-      const caveWallsData = generateCaveWallsByComplexity(session.complexity);
+      const caveWallsData = session.caveData.split(';');
 
       const interval = setInterval(() => {
-        const data = caveWallsData[i] || [''];
-        const wallPositionsString = data.join();
-
-        ws.send(wallPositionsString);
+        ws.send(caveWallsData[i] || '');
 
         i++;
         if (i >= caveWallsData.length) {

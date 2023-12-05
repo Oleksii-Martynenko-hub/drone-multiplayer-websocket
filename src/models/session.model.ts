@@ -11,6 +11,7 @@ class Session extends CommonModel<Session> {
   static readonly attributes = [
     'id',
     'complexity',
+    'caveData',
     'createdAt',
     'finishedAt',
     'score',
@@ -20,6 +21,7 @@ class Session extends CommonModel<Session> {
 
   declare id: CreationOptional<number>;
   declare complexity: number;
+  declare caveData: string;
   declare createdAt: CreationOptional<Date>;
   declare finishedAt: CreationOptional<Date>;
   declare score: number;
@@ -44,6 +46,10 @@ Session.init(
         min: 0,
         max: 10,
       },
+    },
+    caveData: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     createdAt: DataTypes.DATE,
     finishedAt: DataTypes.DATE,
