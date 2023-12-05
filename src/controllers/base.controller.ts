@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 
-import { generateCaveWallsByComplexity } from '../utils/generate-wall-positions';
-
+import { CaveService } from '../services/cave.service';
 import { PlayerService } from '../services/player.service';
 import { TokenService } from '../services/token.service';
 import Token from '../models/token.model';
@@ -20,8 +19,8 @@ export class BaseController {
 
       const tokenWithPayload = TokenService.generateToken(player.dataValues);
 
-      const caveWallsData = generateCaveWallsByComplexity(complexity);
-      const stringCaveData = caveWallsData.map((w) => w.join()).join(';');
+      const caveService = new CaveService(complexity);
+      const stringCaveData = caveService.generateCaveWalls(true);
 
       await player.createToken({ token: tokenWithPayload });
       await player.createSession({ complexity, caveData: stringCaveData });
