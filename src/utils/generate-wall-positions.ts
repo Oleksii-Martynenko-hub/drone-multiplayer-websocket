@@ -90,5 +90,5 @@ export const generateCaveWallsByComplexity = (
     lastPosition = moveToPosition;
   }
 
-  return walls;
+  return walls as [number, number][];
 };
