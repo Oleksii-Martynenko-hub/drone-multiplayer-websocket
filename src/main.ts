@@ -8,6 +8,8 @@ import sequelize from './database/db';
 
 import './models/associations';
 
+import { authMiddleware } from './middlewares/auth.middleware';
+
 import playerRouter from './routes/player.router';
 import roomRouter from './routes/room.router';
 import baseRouter from './routes/base.router';
@@ -31,10 +33,8 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-// TODO: 4. add auth middleware
-app.use('/', baseRouter);
-app.use('/player', playerRouter);
-app.use('/room', roomRouter);
+app.use('/player', authMiddleware, playerRouter);
+app.use('/room', authMiddleware, roomRouter);
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
