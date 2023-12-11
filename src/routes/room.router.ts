@@ -4,8 +4,8 @@ import { roomController } from '../controllers/room.controller';
 
 const router = express.Router();
 
-router.get('/', roomController.getRoomById);
-
-router.post('/', roomController.postCreateRoom);
+router
+  .get('/', roomController.getRoomById)
+  .post('/', roomController.postCreateRoom);
 
 export default router;

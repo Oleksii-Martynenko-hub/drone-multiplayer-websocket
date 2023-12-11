@@ -12,7 +12,7 @@ import { authMiddleware } from './middlewares/auth.middleware';
 
 import playerRouter from './routes/player.router';
 import roomRouter from './routes/room.router';
-import baseRouter from './routes/base.router';
+import authRouter from './routes/auth.router';
 
 import Player from './models/player.model';
 import Token from './models/token.model';
@@ -33,6 +33,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+app.use('/auth', authRouter);
 app.use('/player', authMiddleware, playerRouter);
 app.use('/room', authMiddleware, roomRouter);
 

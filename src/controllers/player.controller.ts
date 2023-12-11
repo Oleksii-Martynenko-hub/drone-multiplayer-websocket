@@ -26,21 +26,6 @@ export class PlayerController {
       res.status(500).json({ message: error.message });
     }
   };
-
-  public postCreatePlayer = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const playerName = req.body.name;
-
-      const newPlayer = await this.playerService.createPlayer(playerName);
-
-      res.status(201).json({ playerId: newPlayer.id });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
 }
 
 export const playerController = new PlayerController();
