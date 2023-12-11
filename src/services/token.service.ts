@@ -6,7 +6,7 @@ export class TokenService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static generateToken(payload: any) {
     return jwt.sign({ ...payload }, JWT_SECRET as string, {
-      expiresIn: '10d',
+      expiresIn: '7d',
     });
   }
 
