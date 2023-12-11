@@ -30,7 +30,7 @@ export class PlayerService {
     });
   }
 
-  public async getPlayerWithRoom(playerId: string): Promise<Player> {
+  public async getPlayerWithRoom(playerId: number): Promise<Player> {
     return Player.findByPk(playerId, {
       include: Player.includeRoomAlias,
     });
