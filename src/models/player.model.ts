@@ -20,7 +20,7 @@ class Player extends CommonModel<Player> {
 
   declare id: CreationOptional<number>;
   declare roomId: ForeignKey<Room['id']>;
-  declare name: string; // TODO: 1. make unique value
+  declare name: string;
 
   declare createRoom: HasOneCreateAssociationMixin<Room>;
   declare createToken: HasOneCreateAssociationMixin<Token>;
@@ -38,6 +38,10 @@ Player.init(
     },
     name: {
       type: DataTypes.STRING(50),
+      unique: {
+        name: 'player_name_unique',
+        msg: 'Player with this name already exists.',
+      },
       allowNull: false,
     },
   },
