@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
@@ -27,7 +28,6 @@ app.use(
   })
 );
 
-// TODO: 2. add cookie parser
 app.use(cookieParser());
 app.use(express.json());
 
