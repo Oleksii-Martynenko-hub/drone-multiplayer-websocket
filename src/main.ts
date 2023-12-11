@@ -27,8 +27,11 @@ app.use(
   })
 );
 
+// TODO: 2. add cookie parser
+app.use(cookieParser());
 app.use(express.json());
 
+// TODO: 4. add auth middleware
 app.use('/', baseRouter);
 app.use('/player', playerRouter);
 app.use('/room', roomRouter);
